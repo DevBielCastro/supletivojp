@@ -789,14 +789,25 @@
           return card;
         }
         
-        function carregarDepoimentos() {
-          const lista = document.getElementById('depoimentoLista');
-          lista.innerHTML = '';
-          depoimentos.forEach((d, i) => {
-            const card = criarDepoimentoCard(d, i);
-            lista.appendChild(card);
-          });
+        async function carregarDepoimentos() {
+            try {
+                const response = await fetch(API_URL);
+                const depoimentos = await response.json();
+                const lista = document.getElementById('listaDepoimentos');
+                lista.innerHTML = depoimentos.map(depoimento => `
+                    <div class="depoimento-card">
+                        <p>${depoimento.texto}</p>
+                        ${depoimento.nome ? `<small>- ${depoimento.nome}</small>` : ''}
+                        <div class="depoimento-data">${new Date(depoimento.data).toLocaleDateString('pt-BR')}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Erro:', error);
+            }
         }
+        
+        // Chamar ao carregar a página
+        document.addEventListener('DOMContentLoaded', carregarDepoimentos);
         
         // Formulário de novo depoimento
         document.getElementById('depoimentoForm')?.addEventListener('submit', e => {

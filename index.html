@@ -596,71 +596,6 @@
     </footer>
 
     <script>
-        // Constante de senha administrativa (idealmente movida para backend)
-        const ADMIN_PASSWORD = 'supletivo2024';
-        
-        // Verifica autenticação admin
-        function isAdminAuthenticated() {
-          return sessionStorage.getItem('adminAuth') === 'true';
-        }
-        
-        // Inicializa o app: sincroniza estado e carrega depoimentos
-        window.addEventListener('DOMContentLoaded', () => {
-          const auth = sessionStorage.getItem('adminAuth');
-          if (auth !== 'true') {
-            sessionStorage.removeItem('adminAuth');
-            document.body.classList.remove('admin-authenticated');
-          } else {
-            document.body.classList.add('admin-authenticated');
-          }
-          carregarDepoimentos();
-        
-          // Vincula evento de login ao botão dentro do modal (caso não use form submit)
-          const btnLogin = document.querySelector('#adminModal button[type="submit"], #btnAcessarAdmin');
-          if (btnLogin) {
-            btnLogin.addEventListener('click', fazerLoginAdmin);
-          }
-        });
-        
-        // Abre/fecha modal de login admin
-        function toggleAdminModal() {
-          const modal = document.getElementById('adminModal');
-          modal.classList.toggle('active');
-          if (modal.classList.contains('active')) {
-            document.getElementById('adminSenha').focus();
-          }
-        }
-        
-        document.getElementById('btnAbrirAdmin')?.addEventListener('click', toggleAdminModal);
-        
-        // Login admin (client-side)
-        function fazerLoginAdmin(event) {
-          // Previna envio de form caso exista
-          if (event) {
-            event.preventDefault();
-          }
-          const senha = document.getElementById('adminSenha').value;
-          const modal = document.getElementById('adminModal');
-          if (senha === ADMIN_PASSWORD) {
-            sessionStorage.setItem('adminAuth', 'true');
-            document.body.classList.add('admin-authenticated');
-            modal.classList.remove('active');
-            carregarDepoimentos();
-            alert('✅ Modo administrativo ativado!');
-          } else {
-            alert('❌ Senha incorreta! Tente novamente.');
-            document.getElementById('adminSenha').value = '';
-            document.getElementById('adminSenha').focus();
-          }
-        }
-        
-        // Logout admin
-        function adminLogout() {
-          sessionStorage.removeItem('adminAuth');
-          document.body.classList.remove('admin-authenticated');
-          carregarDepoimentos();
-          alert('🔒 Modo administrativo desativado!');
-        }
         
         // Máscara de telefone
         document.getElementById('telefone')?.addEventListener('input', e => {
@@ -826,6 +761,72 @@
           document.getElementById('depoimentoContainer').classList.toggle('active');
           document.getElementById('depoimentoForm').classList.toggle('active');
         }
+
+         // Constante de senha administrativa (idealmente movida para backend)
+         const ADMIN_PASSWORD = 'supletivo2024';
+        
+         // Verifica autenticação admin
+         function isAdminAuthenticated() {
+           return sessionStorage.getItem('adminAuth') === 'true';
+         }
+         
+         // Inicializa o app: sincroniza estado e carrega depoimentos
+         window.addEventListener('DOMContentLoaded', () => {
+           const auth = sessionStorage.getItem('adminAuth');
+           if (auth !== 'true') {
+             sessionStorage.removeItem('adminAuth');
+             document.body.classList.remove('admin-authenticated');
+           } else {
+             document.body.classList.add('admin-authenticated');
+           }
+           carregarDepoimentos();
+         
+           // Vincula evento de login ao botão dentro do modal (caso não use form submit)
+           const btnLogin = document.querySelector('#adminModal button[type="submit"], #btnAcessarAdmin');
+           if (btnLogin) {
+             btnLogin.addEventListener('click', fazerLoginAdmin);
+           }
+         });
+         
+         // Abre/fecha modal de login admin
+         function toggleAdminModal() {
+           const modal = document.getElementById('adminModal');
+           modal.classList.toggle('active');
+           if (modal.classList.contains('active')) {
+             document.getElementById('adminSenha').focus();
+           }
+         }
+         
+         document.getElementById('btnAbrirAdmin')?.addEventListener('click', toggleAdminModal);
+         
+         // Login admin (client-side)
+         function fazerLoginAdmin(event) {
+           // Previna envio de form caso exista
+           if (event) {
+             event.preventDefault();
+           }
+           const senha = document.getElementById('adminSenha').value;
+           const modal = document.getElementById('adminModal');
+           if (senha === ADMIN_PASSWORD) {
+             sessionStorage.setItem('adminAuth', 'true');
+             document.body.classList.add('admin-authenticated');
+             modal.classList.remove('active');
+             carregarDepoimentos();
+             alert('✅ Modo administrativo ativado!');
+           } else {
+             alert('❌ Senha incorreta! Tente novamente.');
+             document.getElementById('adminSenha').value = '';
+             document.getElementById('adminSenha').focus();
+           }
+         }
+         
+         // Logout admin
+         function adminLogout() {
+           sessionStorage.removeItem('adminAuth');
+           document.body.classList.remove('admin-authenticated');
+           carregarDepoimentos();
+           alert('🔒 Modo administrativo desativado!');
+         }
         
         </script>
                 

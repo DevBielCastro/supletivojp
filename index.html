@@ -684,149 +684,149 @@
           });
         });
         
-        // 1. URL do seu endpoint HTTP API (API Gateway → Lambda → DynamoDB)
-  const API_URL = 'https://<seu-endpoint>.execute-api.<região>.amazonaws.com/prod/depoimentos'; // :contentReference[oaicite:0]{index=0}
-
-    // 2. Autenticação admin (client-side, idealmente migrar para Cognito/Backend)
-    const ADMIN_PASSWORD = 'supletivo2024';
-    function isAdminAuthenticated() {
-      return sessionStorage.getItem('adminAuth') === 'true';
-    }
-    function fazerLoginAdmin(e) {
-      e.preventDefault();
-      const senha = document.getElementById('adminSenha').value;
-      if (senha === ADMIN_PASSWORD) {
-        sessionStorage.setItem('adminAuth', 'true');
-        document.body.classList.add('admin-authenticated');
-        toggleAdminModal();
-        carregarDepoimentos();
-        alert('✅ Modo administrativo ativado!');
-      } else {
-        alert('❌ Senha incorreta!');
-        document.getElementById('adminSenha').value = '';
-        document.getElementById('adminSenha').focus();
-      }
-    }
-    function adminLogout() {
-      sessionStorage.removeItem('adminAuth');
-      document.body.classList.remove('admin-authenticated');
-      carregarDepoimentos();
-      alert('🔒 Modo administrativo desativado!');
-    }
-    document.getElementById('adminForm')?.addEventListener('submit', fazerLoginAdmin);
-    document.getElementById('btnLogoutAdmin')?.addEventListener('click', adminLogout);
-  
-    // 3. Modal administrativo
-    function toggleAdminModal() {
-      const modal = document.getElementById('adminModal');
-      modal.classList.toggle('active');
-      if (modal.classList.contains('active')) {
-        document.getElementById('adminSenha').focus();
-      }
-    }
-    document.getElementById('btnAbrirAdmin')?.addEventListener('click', toggleAdminModal);
-  
-    // 4. Carregar depoimentos (GET)
-    async function carregarDepoimentos() {
-      try {
-        const res = await fetch(API_URL);  // :contentReference[oaicite:1]{index=1}
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const lista = document.getElementById('listaDepoimentos');
-        lista.innerHTML = '';  // Limpa antes de renderizar
-        data.forEach((d, idx) => {
-          const card = criarDepoimentoCard(d, idx);
-          lista.appendChild(card);
-        });
-      } catch (err) {
-        console.error('Erro ao carregar depoimentos:', err);
-        // Você pode exibir uma mensagem de erro na UI aqui
-      }
-    }
-  
-    // 5. Renderização do card de depoimento
-    function criarDepoimentoCard(depoimento, index) {
-      const card = document.createElement('div');
-      card.className = 'depoimento-card';
-  
-      if (isAdminAuthenticated()) {
-        const btn = document.createElement('button');
-        btn.className = 'btn-excluir';
-        btn.innerHTML = '<i class="fas fa-times"></i>';
-        btn.addEventListener('click', () => excluirDepoimento(depoimento.id));
-        card.appendChild(btn);
-      }
-  
-      const p = document.createElement('p');
-      p.textContent = depoimento.texto;
-      card.appendChild(p);
-  
-      if (depoimento.nome) {
-        const small = document.createElement('small');
-        small.textContent = `- ${depoimento.nome}`;
-        card.appendChild(small);
-      }
-  
-      const d = document.createElement('div');
-      d.className = 'depoimento-data';
-      d.textContent = new Date(depoimento.data).toLocaleDateString('pt-BR');
-      card.appendChild(d);
-  
-      return card;
-    }
-  
-    // 6. Enviar novo depoimento (POST)
-    document.getElementById('depoimentoForm')?.addEventListener('submit', async e => {
-      e.preventDefault();
-      const nome  = document.getElementById('depoimentoNome').value.trim();
-      const texto = document.getElementById('depoimentoTexto').value.trim();
-      if (!texto) return;
-  
-      try {
-        const payload = { nome, texto, data: new Date().toISOString() };
-        const res = await fetch(API_URL, {
-          method:  'POST',                    // :contentReference[oaicite:2]{index=2}
-          headers: { 'Content-Type': 'application/json' },  // :contentReference[oaicite:3]{index=3}
-          body:    JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        document.getElementById('depoimentoForm').reset();
-        toggleDepoimentoForm();
-        carregarDepoimentos();
-      } catch (err) {
-        console.error('Erro ao enviar depoimento:', err);
-        alert('❌ Não foi possível enviar. Tente novamente mais tarde.');
-      }
-    });
-  
-    // 7. Excluir depoimento (DELETE)
-    async function excluirDepoimento(id) {
-      if (!isAdminAuthenticated()) {
-        alert('🔒 Acesso negado!');
-        return;
-      }
-      if (!confirm('Tem certeza que deseja excluir?')) return;
-  
-      try {
-        const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        carregarDepoimentos();
-      } catch (err) {
-        console.error('Erro ao excluir depoimento:', err);
-        alert('❌ Falha ao excluir. Tente novamente.');
-      }
-    }
-  
-    // 8. Toggle formulário de depoimento
-    function toggleDepoimentoForm() {
-      document.getElementById('depoimentoContainer').classList.toggle('active');
-      document.getElementById('depoimentoForm').classList.toggle('active');
-    }
-    document.getElementById('btnToggleForm')?.addEventListener('click', toggleDepoimentoForm);
-  
-    // 9. Inicia tudo após o DOM estar pronto
-    document.addEventListener('DOMContentLoaded', carregarDepoimentos);
+        window.addEventListener('DOMContentLoaded', () => {
+            // 2.1 Configuração de endpoint e fallback
+            const API_URL = 'https://zulg3idve7.execute-api.us-east-1.amazonaws.com/depoimentos';
+            const USE_LOCAL = false; // já configurado com endpoint válido
         
+            // 2.2 Estado e array de depoimentos
+            const ADMIN_PASSWORD = 'supletivo2024';
+            let depoimentos = JSON.parse(localStorage.getItem('depoimentos') || '[]');
+        
+            // 2.3 Helpers de autenticação
+            const isAdminAuthenticated = () =>
+              sessionStorage.getItem('adminAuth') === 'true';
+        
+            function fazerLoginAdmin(e) {
+              e.preventDefault();
+              const senha = document.getElementById('adminSenha').value;
+              if (senha === ADMIN_PASSWORD) {
+                sessionStorage.setItem('adminAuth', 'true');
+                document.body.classList.add('admin-authenticated');
+                toggleAdminModal();
+                carregarDepoimentos();
+                alert('✅ Modo administrativo ativado!');
+              } else {
+                alert('❌ Senha incorreta!');
+                document.getElementById('adminSenha').value = '';
+                document.getElementById('adminSenha').focus();
+              }
+            }
+        
+            function adminLogout() {
+              sessionStorage.removeItem('adminAuth');
+              document.body.classList.remove('admin-authenticated');
+              carregarDepoimentos();
+              alert('🔒 Modo administrativo desativado!');
+            }
+        
+            // 2.4 Bind de eventos
+            document.getElementById('btnAbrirAdmin')
+              .addEventListener('click', toggleAdminModal);
+            document.getElementById('btnAcessarAdmin')
+              .addEventListener('click', fazerLoginAdmin);
+            document.getElementById('btnLogoutAdmin')
+              .addEventListener('click', adminLogout);
+            document.getElementById('btnToggleForm')
+              .addEventListener('click', toggleDepoimentoForm);
+        
+            document.getElementById('depoimentoForm')
+              .addEventListener('submit', async e => {
+                e.preventDefault();
+                const nome  = document.getElementById('depoimentoNome').value.trim();
+                const texto = document.getElementById('depoimentoTexto').value.trim();
+                if (!texto) return;
+                const novo = { nome, texto, data: new Date().toISOString() };
+        
+                try {
+                  // Envia para API remota
+                  const res = await fetch(API_URL, {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify(novo)
+                  });
+                  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        
+                  document.getElementById('depoimentoForm').reset();
+                  toggleDepoimentoForm();
+                  carregarDepoimentos();
+                } catch (err) {
+                  console.error('Erro ao enviar depoimento:', err);
+                  alert('❌ Não foi possível enviar. Tente novamente.');
+                }
+              });
+        
+            // 2.5 Funções principais
+            function toggleAdminModal() {
+              const m = document.getElementById('adminModal');
+              m.classList.toggle('active');
+              if (m.classList.contains('active'))
+                document.getElementById('adminSenha').focus();
+            }
+            function toggleDepoimentoForm() {
+              document.getElementById('depoimentoContainer').classList.toggle('active');
+              document.getElementById('depoimentoForm').classList.toggle('active');
+            }
+        
+            function criarDepoimentoCard(d, idx) {
+              const card = document.createElement('div');
+              card.className = 'depoimento-card';
+              if (isAdminAuthenticated()) {
+                const btn = document.createElement('button');
+                btn.className = 'btn-excluir';
+                btn.innerHTML = '<i class="fas fa-times"></i>';
+                btn.addEventListener('click', () => excluirDepoimento(d.id ?? idx));
+                card.appendChild(btn);
+              }
+              const p = document.createElement('p');
+              p.textContent = d.texto;
+              card.appendChild(p);
+              if (d.nome) {
+                const s = document.createElement('small');
+                s.textContent = `- ${d.nome}`;
+                card.appendChild(s);
+              }
+              const dt = document.createElement('div');
+              dt.className = 'depoimento-data';
+              dt.textContent = new Date(d.data).toLocaleDateString('pt-BR');
+              card.appendChild(dt);
+              return card;
+            }
+        
+            async function carregarDepoimentos() {
+              try {
+                const res = await fetch(API_URL);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                depoimentos = await res.json();
+              } catch (err) {
+                console.error('Erro ao carregar depoimentos:', err);
+              } finally {
+                const list = document.getElementById('listaDepoimentos');
+                list.innerHTML = '';
+                depoimentos.forEach((d, i) => list.appendChild(criarDepoimentoCard(d, i)));
+              }
+            }
+        
+            async function excluirDepoimento(id) {
+              if (!isAdminAuthenticated()) {
+                alert('🔒 Acesso negado!');
+                return;
+              }
+              if (!confirm('Tem certeza que deseja excluir?')) return;
+              try {
+                const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                carregarDepoimentos();
+              } catch (err) {
+                console.error('Erro ao excluir depoimento:', err);
+                alert('❌ Falha ao excluir.');
+              }
+            }
+        
+            // 2.6 Inicialização
+            carregarDepoimentos();
+          });
+            
         </script>
                 
 </body>

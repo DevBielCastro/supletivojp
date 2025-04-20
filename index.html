@@ -266,20 +266,28 @@
         
         .depoimento-container {
             display: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            width: 100%;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
         }
         
         .depoimento-container.active {
-            display: grid;
-            opacity: 1;
+            display: grid !important; /* Força a exibição */
+            animation: aparecer 0.5s ease;
         }
         
-        .depoimento-form {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
+        @keyframes aparecer {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .depoimento-form .form-container {
+            background: var(--branco);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid var(--dourado);
         }
         
         .depoimento-form.active {
@@ -292,6 +300,9 @@
             padding: 1rem;
             max-height: 600px;
             overflow-y: auto;
+            padding: 15px;
+            background: rgba(188, 153, 78, 0.05);
+            border-radius: 10px;
         }
         
         .depoimento-card {
@@ -548,6 +559,7 @@
         </button>
         
         <div class="depoimento-container" id="depoimentoContainer">
+            <!-- Formulário -->
             <form class="depoimento-form" id="depoimentoForm">
                 <div class="form-container">
                     <h3>Conte sua experiência</h3>
@@ -565,16 +577,12 @@
                 </div>
             </form>
     
+            <!-- Lista de Depoimentos -->
             <div class="depoimento-lista" id="listaDepoimentos"></div>
         </div>
+
     </section>    
-    
-                        <div class="depoimento-lista" id="listaDepoimentos"> <!-- Corrigido o ID -->
-            </div>
 
-        </div>
-
-    </section>
 
     <div class="admin-panel">
         <button onclick="toggleAdminModal()" class="rede-social-item" type="button">

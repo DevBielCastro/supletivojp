@@ -266,30 +266,26 @@
         
         .depoimento-container {
             display: none;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-            transition: all 0.3s ease;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            width: 100%;
         }
         
         .depoimento-container.active {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            opacity: 1;
         }
         
         .depoimento-form {
             max-height: 0;
             overflow: hidden;
-            transition: all 0.3s ease;
-            padding: 0 1rem;
+            transition: max-height 0.3s ease;
         }
         
         .depoimento-form.active {
             max-height: 500px;
-            padding: 1rem;
         }
-        
+
         .depoimento-lista {
             background: rgba(188, 153, 78, 0.05);
             border-radius: 10px;
@@ -440,6 +436,20 @@
             .form-container {
                 padding: 1.5rem;
             }
+
+            .loading {
+                position: relative;
+                opacity: 0.6;
+            }
+            
+            .loading::after {
+                content: "Carregando...";
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+
         }
     </style>
 </head>
@@ -533,7 +543,7 @@
     </section>
 
     <section class="depoimentos-section">
-        <button class="depoimento-toggle" onclick="toggleDepoimentoForm()">
+        <button class="depoimento-toggle" id="btnToggleDepoimentos">
             <i class="fas fa-comment-medical"></i> Depoimento dos Alunos
         </button>
         
@@ -542,23 +552,24 @@
                 <div class="form-container">
                     <h3>Conte sua experiência</h3>
                     <input type="text" id="depoimentoNome" 
-                           placeholder="Seu nome (opcional)"
-                           class="depoimento-input">
+                           placeholder="Seu nome (opcional)">
                     
                     <textarea id="depoimentoTexto" 
-                              class="depoimento-input" 
                               rows="4"
                               placeholder="Escreva seu depoimento aqui..."
                               required></textarea>
                     
-                    <button type="submit" 
-                            style="width: 100%; margin-top: 1rem;">
+                    <button type="submit">
                         <i class="fas fa-paper-plane"></i> Enviar
                     </button>
                 </div>
             </form>
     
-            <div class="depoimento-lista" id="depoimentoLista">
+            <div class="depoimento-lista" id="listaDepoimentos"></div>
+        </div>
+    </section>    
+    
+                        <div class="depoimento-lista" id="listaDepoimentos"> <!-- Corrigido o ID -->
             </div>
 
         </div>
@@ -684,14 +695,100 @@
           });
         });
         
-        // 1. Configuração da API
-const API_URL = 'https://zulg3idve7.execute-api.us-east-1.amazonaws.com/depoimentos';
-const ADMIN_PASSWORD = 'supletivo2024';
-const COMMON_HEADERS = {
-  'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': '*'
-};
+// Configurações da API
+const API_URL = 'https://sua-api.com/depoimentos';
+const ADMIN_PASSWORD = 'senhaSegura123';
 
+// Controle de Depoimentos
+document.addEventListener('DOMContentLoaded', async () => {
+    await carregarDepoimentos();
+    
+    // Event listeners
+    document.getElementById('depoimentoForm').addEventListener('submit', enviarDepoimento);
+    document.querySelector('.depoimento-toggle').addEventListener('click', toggleDepoimentoForm);
+});
+
+async function carregarDepoimentos() {
+    try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        renderizarDepoimentos(data);
+    } catch (error) {
+        console.error('Erro ao carregar depoimentos:', error);
+        alert('Erro ao carregar depoimentos. Tente recarregar a página.');
+    }
+}
+
+function renderizarDepoimentos(depoimentos) {
+    const lista = document.getElementById('listaDepoimentos');
+    lista.innerHTML = '';
+    
+    depoimentos.forEach(depoimento => {
+        const card = document.createElement('div');
+        card.className = 'depoimento-card';
+        card.innerHTML = `
+            <p>${depoimento.texto}</p>
+            ${depoimento.nome ? `<small>- ${depoimento.nome}</small>` : ''}
+            <div class="depoimento-data">
+                ${new Date(depoimento.data).toLocaleDateString('pt-BR')}
+            </div>
+        `;
+        lista.appendChild(card);
+    });
+
+    // Diagnóstico rápido
+function verificarElementos() {
+    const elements = {
+        button: document.getElementById('btnToggleDepoimentos'),
+        container: document.getElementById('depoimentoContainer'),
+        form: document.getElementById('depoimentoForm')
+    };
+    
+    console.table(elements);
+    
+    if (!elements.container) {
+        console.error('Container de depoimentos não encontrado!');
+    }
+}
+
+verificarElementos();
+
+}
+
+async function enviarDepoimento(e) {
+    e.preventDefault();
+    
+    const nome = document.getElementById('depoimentoNome').value.trim();
+    const texto = document.getElementById('depoimentoTexto').value.trim();
+    
+    if (!texto) {
+        alert('Por favor, escreva seu depoimento antes de enviar.');
+        return;
+    }
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ nome, texto })
+        });
+
+        if (!response.ok) throw new Error('Falha no envio');
+        
+        document.getElementById('depoimentoForm').reset();
+        await carregarDepoimentos();
+        alert('Depoimento enviado com sucesso!');
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao enviar depoimento. Tente novamente.');
+    }
+}
+
+function toggleDepoimentoForm() {
+    const container = document.getElementById('depoimentoContainer');
+    container.classList.toggle('active');
+    document.getElementById('depoimentoTexto').focus();
+}
 // 2. Controle de Sessão Admin
 let adminTimeout;
 
@@ -733,11 +830,33 @@ function toggleAdminModal() {
   modal.style.display = modal.classList.contains('active') ? 'block' : 'none';
 }
 
-function toggleDepoimentoForm() {
-  const container = document.getElementById('depoimentoContainer');
-  container.classList.toggle('active');
-  document.getElementById('depoimentoTexto').focus();
+// Controle de exibição dos depoimentos
+const btnDepoimentos = document.getElementById('btnToggleDepoimentos');
+const containerDepoimentos = document.getElementById('depoimentoContainer');
+
+function toggleDepoimentos() {
+    containerDepoimentos.classList.toggle('active');
+    document.getElementById('depoimentoTexto').focus();
+    
+    // Forçar redesenho para ativar a transição
+    void containerDepoimentos.offsetWidth;
 }
+
+// Event listeners
+btnDepoimentos.addEventListener('click', toggleDepoimentos);
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', () => {
+    // Garantir que o container está fechado inicialmente
+    containerDepoimentos.classList.remove('active');
+    
+    // Verificar funcionamento básico
+    console.log('Sistema de depoimentos carregado');
+    console.log('Elementos encontrados:', {
+        btn: btnDepoimentos,
+        container: containerDepoimentos
+    });
+});
 
 // 5. Carregar Depoimentos
 async function carregarDepoimentos() {

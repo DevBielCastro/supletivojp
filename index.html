@@ -623,335 +623,276 @@
     </footer>
 
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.985.0.min.js"></script>
-    <script>
-        /* ========== CONFIGURAÇÕES GLOBAIS ========== */
-        const APP_CONFIG = {
-            AWS: {
-                region: 'sa-east-1',
-                identityPoolId: 'sa-east-1:6be16619-7776-419a-8be0-7affba9c97f0',
-                dynamoDB: {
-                    tableName: 'Depoimentos',
-                    endpoint: 'https://odmy5r1znf.execute-api.sa-east-1.amazonaws.com/prod/depoimentos'
-                }
-            },
-            admin: {
-                password: 'sua_senha_segura_aqui',
-                sessionTimeout: 3600000 // 1 hora
-            },
-            whatsapp: {
-                phone: '5583988960364',
-                messageTemplate: `*📘 NOVA MATRÍCULA - SUPLETIVO JP*%0A%0A` +
-                    `*Nome:* {nome}%0A` +
-                    `*Telefone:* {telefone}%0A` +
-                    `*E-mail:* {email}%0A` +
-                    `*Nível Escolar:* {nivel}%0A%0A` +
-                    `_Gostaria de concluir meus estudos!_`
-            }
+<script>
+    // Configuração do AWS para Depoimentos
+    AWS.config.update({
+        region: 'sa-east-1', // 1. Região correta
+        credentials: new AWS.CognitoIdentityCredentials({
+            IdentityPoolId: 'sa-east-1:6be16619-7776-419a-8be0-7affba9c97f0'
+        })
+    });
+
+    AWS.config.update(AWS_CONFIG);
+
+    AWS.config.getCredentials((err) => {
+        if (err) console.error("Erro Cognito:", err);
+        else console.log("Credenciais OK:", AWS.config.credentials);
+    });
+
+    
+
+    const dynamodb = new AWS.DynamoDB.DocumentClient();
+    const TABLE_NAME = 'Depoimentos';
+    const API_URL = 'https://odmy5r1znf.execute-api.sa-east-1.amazonaws.com/prod/depoimentos';
+
+    // ========== FUNCIONALIDADES GERAIS ========== //
+    
+    // Máscara de telefone
+    document.getElementById('telefone')?.addEventListener('input', e => {
+        let v = e.target.value.replace(/\D/g, '');
+        v = v.replace(/^(\d{2})(\d)/, '($1) $2');
+        v = v.replace(/(\d)(\d{4})$/, '$1-$2');
+        e.target.value = v;
+    });
+
+    // Sistema de Matrícula
+    function salvarDados() {
+        const dados = {
+            nome: document.getElementById('nome').value,
+            email: document.getElementById('email').value,
+            telefone: document.getElementById('telefone').value,
+            nivel: document.getElementById('nivel').value
         };
-    
-        /* ========== INICIALIZAÇÃO DO AWS SDK ========== */
-        let dynamoDBClient;
-    
-        async function initializeAWS() {
-            try {
-                AWS.config.update({
-                    region: APP_CONFIG.AWS.region,
-                    credentials: new AWS.CognitoIdentityCredentials({
-                        IdentityPoolId: APP_CONFIG.AWS.identityPoolId
-                    })
-                });
-    
-                await AWS.config.credentials.getPromise();
-                dynamoDBClient = new AWS.DynamoDB.DocumentClient();
-                console.log('AWS inicializado com sucesso');
-                return true;
-            } catch (error) {
-                console.error('Falha na inicialização do AWS:', error);
-                alert('Erro de conexão com o serviço. Por favor recarregue a página.');
-                return false;
-            }
-        }
-    
-        /* ========== MÓDULO DE MATRÍCULA ========== */
-        class MatriculaManager {
-            static formFields = ['nome', 'email', 'telefone', 'nivel'];
-    
-            static init() {
-                this.loadSavedData();
-                this.setupValidation();
-                document.getElementById('formMatricula')?.addEventListener('submit', this.handleSubmit.bind(this));
-            }
-    
-            static loadSavedData() {
-                const data = JSON.parse(localStorage.getItem('dadosMatricula') || '{}');
-                this.formFields.forEach(id => {
-                    const element = document.getElementById(id);
-                    if (element) element.value = data[id] || '';
-                });
-            }
-    
-            static setupValidation() {
-                document.getElementById('telefone')?.addEventListener('input', this.formatPhoneNumber);
-            }
-    
-            static formatPhoneNumber(e) {
-                let value = e.target.value.replace(/\D/g, '');
-                value = value.replace(/^(\d{2})(\d)/, '($1) $2');
-                value = value.replace(/(\d)(\d{4})$/, '$1-$2');
-                e.target.value = value;
-            }
-    
-            static validateForm() {
-                let isValid = true;
-                this.formFields.forEach(id => {
-                    const element = document.getElementById(id);
-                    if (element && !element.value.trim()) {
-                        element.style.borderColor = 'red';
-                        isValid = false;
-                    } else if (element) {
-                        element.style.borderColor = 'var(--dourado)';
-                    }
-                });
-                return isValid;
-            }
-    
-            static async handleSubmit(e) {
-                e.preventDefault();
-                if (!this.validateForm()) return;
-    
-                const formData = this.formFields.reduce((acc, id) => {
-                    acc[id] = document.getElementById(id).value;
-                    return acc;
-                }, {});
-    
-                this.sendToWhatsApp(formData);
-                this.saveData(formData);
-                this.resetFormUI();
-            }
-    
-            static sendToWhatsApp(data) {
-                const message = APP_CONFIG.whatsapp.messageTemplate
-                    .replace(/{nome}/g, encodeURIComponent(data.nome))
-                    .replace(/{telefone}/g, encodeURIComponent(data.telefone))
-                    .replace(/{email}/g, encodeURIComponent(data.email))
-                    .replace(/{nivel}/g, encodeURIComponent(data.nivel));
-    
-                window.open(`https://api.whatsapp.com/send?phone=${APP_CONFIG.whatsapp.phone}&text=${message}`, '_blank');
-            }
-    
-            static saveData(data) {
-                localStorage.setItem('dadosMatricula', JSON.stringify(data));
-            }
-    
-            static resetFormUI() {
-                const submitButton = document.querySelector('#formMatricula button[type="submit"]');
-                if (submitButton) {
-                    submitButton.innerHTML = '<i class="fas fa-check"></i> MATRÍCULA ENVIADA!';
-                    submitButton.style.backgroundColor = '#01120a';
-                    
-                    setTimeout(() => {
-                        submitButton.innerHTML = 'ENVIAR MATRÍCULA <i class="fas fa-arrow-right"></i>';
-                        submitButton.style.backgroundColor = '';
-                    }, 3000);
-                }
-                
-                localStorage.removeItem('dadosMatricula');
-                document.getElementById('formMatricula')?.reset();
-            }
-        }
-    
-        /* ========== MÓDULO DE DEPOIMENTOS ========== */
-        class DepoimentoManager {
-            static async init() {
-                if (!await initializeAWS()) return;
-    
-                this.bindEvents();
-                await this.loadDepoimentos();
-            }
-    
-            static bindEvents() {
-                document.getElementById('depoimentoForm')?.addEventListener('submit', this.handleSubmit.bind(this));
-                document.getElementById('btnToggleDepoimentos')?.addEventListener('click', this.toggleContainer);
-            }
-    
-            static async loadDepoimentos() {
-                try {
-                    const params = { TableName: APP_CONFIG.AWS.dynamoDB.tableName };
-                    const { Items } = await dynamoDBClient.scan(params).promise();
-                    this.renderDepoimentos(Items);
-                } catch (error) {
-                    console.error('Erro ao carregar depoimentos:', error);
-                    alert('Falha ao carregar depoimentos. Tente novamente.');
-                }
-            }
-    
-            static renderDepoimentos(depoimentos) {
-                const container = document.getElementById('listaDepoimentos');
-                container.innerHTML = '';
-    
-                depoimentos
-                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                    .forEach(depoimento => {
-                        const card = this.createDepoimentoCard(depoimento);
-                        container.appendChild(card);
-                    });
-            }
-    
-            static createDepoimentoCard(depoimento) {
-                const card = document.createElement('div');
-                card.className = 'depoimento-card';
-                card.innerHTML = `
-                    ${AdminManager.isAuthenticated() ? this.getAdminControls(depoimento.commentId) : ''}
-                    <p>${depoimento.texto}</p>
-                    ${depoimento.nome ? `<small>- ${depoimento.nome}</small>` : ''}
-                    <div class="depoimento-data">
-                        ${new Date(depoimento.timestamp).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: 'long',
-                            year: 'numeric'
-                        })}
-                    </div>
-                `;
-                return card;
-            }
-    
-            static getAdminControls(commentId) {
-                return `
-                    <button class="btn-excluir" onclick="DepoimentoManager.deleteDepoimento('${commentId}')">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-            }
-    
-            static async handleSubmit(e) {
-                e.preventDefault();
-    
-                const texto = document.getElementById('depoimentoTexto').value.trim();
-                if (!texto) return alert('Por favor, escreva seu depoimento.');
-    
-                try {
-                    const params = {
-                        TableName: APP_CONFIG.AWS.dynamoDB.tableName,
-                        Item: {
-                            commentId: Date.now().toString(),
-                            texto: texto,
-                            nome: document.getElementById('depoimentoNome').value.trim() || 'Anônimo',
-                            timestamp: new Date().toISOString(),
-                            status: 'pendente'
-                        }
-                    };
-    
-                    await dynamoDBClient.put(params).promise();
-                    await this.loadDepoimentos();
-                    this.resetForm();
-                    alert('Depoimento enviado para moderação!');
-                } catch (error) {
-                    console.error('Erro ao enviar depoimento:', error);
-                    alert('Falha no envio. Tente novamente.');
-                }
-            }
-    
-            static resetForm() {
-                document.getElementById('depoimentoForm').reset();
-            }
-    
-            static toggleContainer() {
-                document.getElementById('depoimentoContainer').classList.toggle('active');
-            }
-    
-            static async deleteDepoimento(commentId) {
-                if (!confirm('Confirmar exclusão permanente?')) return;
-    
-                try {
-                    const params = {
-                        TableName: APP_CONFIG.AWS.dynamoDB.tableName,
-                        Key: { commentId: commentId }
-                    };
-    
-                    await dynamoDBClient.delete(params).promise();
-                    await this.loadDepoimentos();
-                } catch (error) {
-                    console.error('Erro na exclusão:', error);
-                    alert('Falha ao excluir depoimento');
-                }
-            }
-        }
-    
-        /* ========== MÓDULO ADMINISTRATIVO ========== */
-        class AdminManager {
-            static init() {
-                this.restoreSession();
-                document.getElementById('adminLoginForm')?.addEventListener('submit', this.handleLogin.bind(this));
-            }
-    
-            static isAuthenticated() {
-                return sessionStorage.getItem('adminAuth') === 'true';
-            }
-    
-            static restoreSession() {
-                if (this.isAuthenticated()) {
-                    document.body.classList.add('admin-authenticated');
-                    this.setSessionTimeout();
-                }
-            }
-    
-            static async handleLogin(e) {
-                e.preventDefault();
-                const password = document.getElementById('adminSenha').value;
-    
-                if (password === APP_CONFIG.admin.password) {
-                    sessionStorage.setItem('adminAuth', 'true');
-                    document.body.classList.add('admin-authenticated');
-                    this.setSessionTimeout();
-                    DepoimentoManager.loadDepoimentos();
-                    this.toggleModal();
-                    alert('Modo admin ativado!');
-                } else {
-                    alert('Senha incorreta!');
-                }
-            }
-    
-            static setSessionTimeout() {
-                setTimeout(() => {
-                    sessionStorage.removeItem('adminAuth');
-                    document.body.classList.remove('admin-authenticated');
-                }, APP_CONFIG.admin.sessionTimeout);
-            }
-    
-            static toggleModal() {
-                document.getElementById('adminModal').classList.toggle('active');
-            }
-        }
-    
-        /* ========== MÓDULO DE FAQ ========== */
-        class FAQManager {
-            static init() {
-                document.querySelectorAll('.faq-pergunta').forEach(item => {
-                    item.addEventListener('click', this.toggleAnswer);
-                });
-            }
-    
-            static toggleAnswer(e) {
-                const parent = e.target.closest('.faq-item');
-                parent.classList.toggle('active');
-                
-                document.querySelectorAll('.faq-item').forEach(item => {
-                    if (item !== parent) item.classList.remove('active');
-                });
-            }
-        }
-    
-        /* ========== INICIALIZAÇÃO DA APLICAÇÃO ========== */
-        document.addEventListener('DOMContentLoaded', () => {
-            MatriculaManager.init();
-            DepoimentoManager.init();
-            AdminManager.init();
-            FAQManager.init();
-            
-            // Estado inicial dos componentes
-            document.getElementById('depoimentoContainer').classList.remove('active');
+        localStorage.setItem('dadosMatricula', JSON.stringify(dados));
+    }
+
+    document.getElementById('formMatricula')?.addEventListener('submit', e => {
+        salvarDados();
+        enviarParaWhatsApp(e);
+    });
+
+    window.addEventListener('load', () => {
+        const dados = JSON.parse(localStorage.getItem('dadosMatricula') || '{}');
+        ['nome','email','telefone','nivel'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = dados[id] || '';
         });
-    </script>
+    });
+
+    function enviarParaWhatsApp(e) {
+        e.preventDefault();
+        const campos = ['nome','email','telefone','nivel'];
+        let valido = true;
+        
+        campos.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && !el.value.trim()) {
+                el.style.borderColor = 'red';
+                valido = false;
+            } else if (el) {
+                el.style.borderColor = 'var(--dourado)';
+            }
+        });
+
+        if (!valido) {
+            alert('Por favor, preencha todos os campos obrigatórios!');
+            return;
+        }
+
+        const dados = campos.reduce((acc, id) => {
+            acc[id] = encodeURIComponent(document.getElementById(id).value);
+            return acc;
+        }, {});
+
+        const mensagem = `*📘 NOVA MATRÍCULA - SUPLETIVO JP*%0A%0A` +
+            `*Nome:* ${dados.nome}%0A` +
+            `*Telefone:* ${dados.telefone}%0A` +
+            `*E-mail:* ${dados.email}%0A` +
+            `*Nível Escolar:* ${dados.nivel}%0A%0A` +
+            `_Gostaria de concluir meus estudos!_`;
+
+        const url = `https://api.whatsapp.com/send?phone=5583988960364&text=${mensagem}`;
+        window.open(url, '_blank');
+        
+        const btn = document.querySelector('button[type="submit"]');
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-check"></i> MATRÍCULA ENVIADA!';
+            btn.style.backgroundColor = '#01120a';
+            setTimeout(() => {
+                btn.innerHTML = 'ENVIAR MATRÍCULA <i class="fas fa-arrow-right"></i>';
+                btn.style.backgroundColor = '';
+            }, 3000);
+        }
+        
+        localStorage.removeItem('dadosMatricula');
+        document.getElementById('formMatricula')?.reset();
+    }
+
+    // Sistema de FAQ
+    document.querySelectorAll('.faq-pergunta').forEach(item => {
+        item.addEventListener('click', () => {
+            const parent = item.parentElement;
+            parent.classList.toggle('active');
+            document.querySelectorAll('.faq-item').forEach(other => {
+                if (other !== parent) other.classList.remove('active');
+            });
+        });
+    });
+
+    // ========== SISTEMA DE DEPOIMENTOS ========== //
+    
+    document.addEventListener('DOMContentLoaded', async () => {
+        await carregarDepoimentos();
+        document.getElementById('depoimentoForm').addEventListener('submit', enviarDepoimento);
+        document.getElementById('btnToggleDepoimentos').addEventListener('click', toggleDepoimentos);
+    });
+
+    async function carregarDepoimentos() {
+        try {
+            const params = {
+                TableName: TABLE_NAME,
+                Limit: 50
+            };
+
+            const data = await dynamodb.scan(params).promise();
+            renderizarDepoimentos(data.Items);
+        } catch (error) {
+            console.error('Erro ao carregar depoimentos:', error);
+            alert('Erro ao carregar depoimentos. Tente recarregar a página.');
+        }
+    }
+
+    function renderizarDepoimentos(depoimentos) {
+        const lista = document.getElementById('listaDepoimentos');
+        lista.innerHTML = '';
+
+        depoimentos.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(depoimento => {
+            const card = document.createElement('div');
+            card.className = 'depoimento-card';
+            card.innerHTML = `
+                ${isAdminAuthenticated() ? `
+                    <button class="btn-excluir" onclick="excluirDepoimento('${depoimento.commentId}')">
+                        <i class="fas fa-times"></i>
+                    </button>` : ''}
+                <p>${depoimento.texto}</p>
+                ${depoimento.nome ? `<small>- ${depoimento.nome}</small>` : ''}
+                <div class="depoimento-data">
+                    ${new Date(depoimento.timestamp).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                    })}
+                </div>
+            `;
+            lista.appendChild(card);
+        });
+    }
+
+    async function enviarDepoimento(e) {
+        e.preventDefault();
+
+        const nome = document.getElementById('depoimentoNome').value.trim();
+        const texto = document.getElementById('depoimentoTexto').value.trim();
+
+        if (!texto) {
+            alert('Por favor, escreva seu depoimento antes de enviar.');
+            return;
+        }
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    texto: texto,
+                    nome: nome || 'Anônimo'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            document.getElementById('depoimentoForm').reset();
+            await carregarDepoimentos();
+            alert('Depoimento enviado para moderação!');
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao enviar depoimento. Tente novamente.');
+        }
+    }
+
+    function toggleDepoimentos() {
+        const container = document.getElementById('depoimentoContainer');
+        container.classList.toggle('active');
+        document.getElementById('depoimentoTexto').focus();
+    }
+
+    // ========== SISTEMA ADMINISTRATIVO ========== //
+    
+    const ADMIN_PASSWORD = 'sua_senha_segura_aqui';
+    let adminTimeout;
+
+    function isAdminAuthenticated() {
+        return sessionStorage.getItem('adminAuth') === 'true';
+    }
+
+    function toggleAdminModal() {
+        const modal = document.getElementById('adminModal');
+        modal.classList.toggle('active');
+    }
+
+    function fazerLoginAdmin() {
+        const senha = document.getElementById('adminSenha').value;
+        
+        if (senha === ADMIN_PASSWORD) {
+            sessionStorage.setItem('adminAuth', 'true');
+            document.body.classList.add('admin-authenticated');
+            adminTimeout = setTimeout(() => {
+                sessionStorage.removeItem('adminAuth');
+                document.body.classList.remove('admin-authenticated');
+            }, 3600000);
+            toggleAdminModal();
+            carregarDepoimentos();
+            alert('Modo admin ativado!');
+        } else {
+            alert('Senha incorreta!');
+        }
+    }
+
+    async function excluirDepoimento(id) {
+        if (!confirm('Tem certeza que deseja excluir este depoimento?')) return;
+
+        try {
+            const params = {
+                TableName: TABLE_NAME,
+                Key: { commentId: id }
+            };
+
+            await dynamodb.delete(params).promise();
+            await carregarDepoimentos();
+        } catch (error) {
+            console.error('Erro ao excluir:', error);
+            alert('Erro ao excluir depoimento');
+        }
+    }
+
+    // Inicialização Final
+    document.addEventListener('DOMContentLoaded', () => {
+        if (isAdminAuthenticated()) {
+            document.body.classList.add('admin-authenticated');
+            adminTimeout = setTimeout(() => {
+                sessionStorage.removeItem('adminAuth');
+                document.body.classList.remove('admin-authenticated');
+            }, 3600000);
+        }
+        
+        // Garantir estado inicial dos depoimentos
+        document.getElementById('depoimentoContainer').classList.remove('active');
+    });
+</script>
                 
 </body>
 </html>

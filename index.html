@@ -626,24 +626,15 @@
 <script>
     // Configuração do AWS para Depoimentos
     AWS.config.update({
-        region: 'sa-east-1', // 1. Região correta
+        region: 'sa-east-1',
         credentials: new AWS.CognitoIdentityCredentials({
             IdentityPoolId: 'sa-east-1:6be16619-7776-419a-8be0-7affba9c97f0'
         })
     });
 
-    AWS.config.update(AWS_CONFIG);
-
-    AWS.config.getCredentials((err) => {
-        if (err) console.error("Erro Cognito:", err);
-        else console.log("Credenciais OK:", AWS.config.credentials);
-    });
-
-    
-
     const dynamodb = new AWS.DynamoDB.DocumentClient();
     const TABLE_NAME = 'Depoimentos';
-    const API_URL = 'https://odmy5r1znf.execute-api.sa-east-1.amazonaws.com/prod/depoimentos';
+    const API_URL = 'https://odmy5r1znf.execute-api.sa-east-1.amazonaws.com/prod'
 
     // ========== FUNCIONALIDADES GERAIS ========== //
     

@@ -313,6 +313,47 @@
             position: relative;
         }
 
+        .botao-depoimento {
+            width: 280px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            background: none;
+          }
+          
+          .botao-depoimento:hover {
+            transform: scale(1.05) rotate(-2deg);
+            filter: brightness(1.1);
+          }
+
+          .botao-depoimento-container {
+            text-align: center;
+            margin: 2rem auto;
+            cursor: pointer;
+            display: inline-block;
+            border: 3px solid var(--dourado);
+            border-radius: 15px;
+            padding: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .botao-depoimento-imagem {
+            width: 750px; /* Ajuste conforme necessário */
+            height: auto;
+            border-radius: 10px;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+        
+        .botao-depoimento-container:hover {
+            transform: scale(1.03);
+            box-shadow: 0 5px 15px rgba(188, 153, 78, 0.3);
+        }
+        
+        .botao-depoimento-container:hover .botao-depoimento-imagem {
+            transform: scale(0.98);
+        }
+
         #depoimentoNome {
             min-height: 50px;
             width: 100%;
@@ -562,9 +603,9 @@
     </section>
 
     <section class="depoimentos-section">
-        <button class="depoimento-toggle" id="btnToggleDepoimentos">
-            <i class="fas fa-comment-medical"></i> Depoimento dos Alunos
-        </button>
+        <div class="botao-depoimento-container" id="btnToggleDepoimentos">
+            <img src="images/botao-depoimentos.png" alt="Depoimentos" class="botao-depoimento-imagem">
+        </div>
         
         <div class="depoimento-container" id="depoimentoContainer">
             <!-- Formulário -->
@@ -622,19 +663,9 @@
         </div>
     </footer>
 
-    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.985.0.min.js"></script>
 <script>
-    // Configuração do AWS para Depoimentos
-    AWS.config.update({
-        region: 'sa-east-1',
-        credentials: new AWS.CognitoIdentityCredentials({
-            IdentityPoolId: 'sa-east-1:6be16619-7776-419a-8be0-7affba9c97f0'
-        })
-    });
 
-    const dynamodb = new AWS.DynamoDB.DocumentClient();
-    const TABLE_NAME = 'Depoimentos';
-    const API_URL = 'https://odmy5r1znf.execute-api.sa-east-1.amazonaws.com/prod'
+    const API_BASE_URL = ''; //
 
     // ========== FUNCIONALIDADES GERAIS ========== //
     
@@ -740,16 +771,14 @@
 
     async function carregarDepoimentos() {
         try {
-            const params = {
-                TableName: TABLE_NAME,
-                Limit: 50
-            };
-
-            const data = await dynamodb.scan(params).promise();
-            renderizarDepoimentos(data.Items);
+            const response = await fetch(`${API_BASE_URL}/depoimentos`);
+            if (!response.ok) throw new Error('Erro na resposta da API');
+            
+            const data = await response.json();
+            renderizarDepoimentos(data);
         } catch (error) {
             console.error('Erro ao carregar depoimentos:', error);
-            alert('Erro ao carregar depoimentos. Tente recarregar a página.');
+            alert('Erro ao carregar. Tente recarregar a página.');
         }
     }
 
@@ -781,37 +810,30 @@
 
     async function enviarDepoimento(e) {
         e.preventDefault();
-
+    
         const nome = document.getElementById('depoimentoNome').value.trim();
         const texto = document.getElementById('depoimentoTexto').value.trim();
-
+    
         if (!texto) {
             alert('Por favor, escreva seu depoimento antes de enviar.');
             return;
         }
-
+    
         try {
-            const response = await fetch(API_URL, {
+            const response = await fetch(`${API_BASE_URL}/depoimentos`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    texto: texto,
-                    nome: nome || 'Anônimo'
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ texto, nome: nome || 'Anônimo' })
             });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
+    
+            if (!response.ok) throw new Error('Falha no envio');
+    
             document.getElementById('depoimentoForm').reset();
             await carregarDepoimentos();
-            alert('Depoimento enviado para moderação!');
+            alert('Depoimento enviado com sucesso!');
         } catch (error) {
             console.error('Erro:', error);
-            alert('Erro ao enviar depoimento. Tente novamente.');
+            alert('Erro ao enviar. Tente novamente.');
         }
     }
 
@@ -855,18 +877,15 @@
 
     async function excluirDepoimento(id) {
         if (!confirm('Tem certeza que deseja excluir este depoimento?')) return;
-
+    
         try {
-            const params = {
-                TableName: TABLE_NAME,
-                Key: { commentId: id }
-            };
-
-            await dynamodb.delete(params).promise();
+            await fetch(`${API_BASE_URL}/depoimentos/${id}`, {
+                method: 'DELETE'
+            });
             await carregarDepoimentos();
         } catch (error) {
             console.error('Erro ao excluir:', error);
-            alert('Erro ao excluir depoimento');
+            alert('Erro na exclusão');
         }
     }
 

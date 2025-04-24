@@ -15,3 +15,14 @@ frontend:
     paths:
       - node_modules/**/*
       - dist/**/*
+
+rewrites:
+  - source: "/<*>"
+    target: "/index.html"
+    status: 200
+
+customHeaders:
+  - pattern: "**/*.html"
+    headers:
+      - key: "Cache-Control"
+        value: "no-cache, max-age=0"

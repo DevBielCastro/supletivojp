@@ -268,21 +268,14 @@
         }
         
         .depoimento-container {
-            max-height: none;
-            overflow: visible;
+            max-height: 0;
+            overflow: hidden;
             transition: max-height 0.3s ease;
-            padding: 2rem 0;
           }
 
         .depoimento-container.active {
             max-height: 800px;
         }
-
-        #a03be988_1745512377 {
-            width: 100% !important;
-            min-height: 50px;
-            height: auto !important;
-          }
         
         @keyframes aparecer {
             from { opacity: 0; transform: translateY(-20px); }
@@ -346,7 +339,7 @@
         }
         
         .botao-depoimento-imagem {
-            width: 700px;
+            width: 750px;
             height: auto;
             border-radius: 10px;
             display: block;
@@ -374,17 +367,7 @@
             color: var(--branco);
             padding: 3rem 1rem;
             text-align: center;
-            position: relative;
-            z-index: 999;
-            margin-top: auto;
-            width: 100%;
-            box-shadow: 0 -5px 15px rgba(1, 18, 10, 0.1);
         }
-
-        section:last-of-type {
-            margin-bottom: 0;
-            padding-bottom: 2rem;
-          }
 
         .info-legal {
             max-width: 800px;
@@ -403,7 +386,7 @@
         }
 
         /* Responsividade */
-        @media (max-width: 768px) {
+        @media (max-width: 750px) {
             .passos-container {
                 grid-template-columns: 1fr;
                 max-width: 500px;
@@ -581,8 +564,6 @@
 <script src="https://www.powr.io/powr.js?platform=google"></script>
 <script>
     
-    // ========== FUNCIONALIDADES GERAIS ========== //
-    
     // Máscara de telefone
     document.getElementById('telefone')?.addEventListener('input', e => {
         let v = e.target.value.replace(/\D/g, '');
@@ -682,18 +663,10 @@
     function toggleDepoimentos() {
       const container = document.getElementById('depoimentoContainer');
       container.classList.toggle('active');
-
-      setTimeout(() => {
-        if(container.classList.contains('active')) {
-          container.style.height = container.scrollHeight + 'px';
-        } else {
-          container.style.height = '0';
-        }
-      }, 500);
     
-      if (!powrLoaded) { 
-        const s = document.createElement('script');   
-        s.src = 'https://www.powr.io/powr.js?platform=html';  
+      if (!powrLoaded) {
+        const s = document.createElement('script'); 
+        s.src = 'https://www.powr.io/powr.js?platform=html'; 
         s.async = true; 
         s.onload = () => {
           if (window.POWR && typeof window.POWR.init === 'function') {

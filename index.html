@@ -265,16 +265,14 @@
             transform: scale(1.05);
         }
         
-        /* Ajustes para o DynamoDB */
         .depoimento-container {
-        transition: all 0.3s ease;
-        max-height: 0;
-        overflow: hidden;
-        }
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+          }
 
         .depoimento-container.active {
-        max-height: 1000px;
-        overflow: visible;
+            max-height: 800px;
         }
         
         @keyframes aparecer {
@@ -355,75 +353,10 @@
             transform: scale(0.98);
         }
 
-        #depoimentoNome {
-            min-height: 50px;
-            width: 100%;
-            padding: 15px;
-            font-size: 1rem;
-            resize: vertical;
-            box-sizing: border-box;
-        }
-
-        #depoimentoTexto {
-            min-height: 150px;
-            width: 100%;
-            padding: 15px;
-            font-size: 1rem;
-            resize: vertical;
-            box-sizing: border-box;
-        }
-
-        .btn-excluir {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: #ff4444;
-            color: white;
-            border: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
-            opacity: 0;
-            transition: all 0.3s ease;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .depoimento-card:hover .btn-excluir {
-            display: flex;
-            opacity: 1;
-        }
-        
         @media (max-width: 768px) {
             .depoimento-container.active {
                 grid-template-columns: 1fr;
             }
-        }
-
-        .admin-panel {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 9999;
-        }
-        
-        .modal-admin {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--branco);
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            z-index: 10000;
-        }
-        
-        .modal-admin.active {
-            display: block;
         }
 
         /* Rodapé */
@@ -605,50 +538,12 @@
 
     <section class="depoimentos-section">
         <div class="botao-depoimento-container" id="btnToggleDepoimentos">
-            <img src="images/botao-depoimentos.png" alt="Depoimentos" class="botao-depoimento-imagem">
+          <img src="images/botao-depoimentos.png" alt="Depoimentos" class="botao-depoimento-imagem">
         </div>
-        
         <div class="depoimento-container" id="depoimentoContainer">
-            <!-- Formulário -->
-            <form class="depoimento-form" id="depoimentoForm">
-                <div class="form-container">
-                    <h3>Conte sua experiência</h3>
-                    <input type="text" id="depoimentoNome" 
-                           placeholder="Seu nome (opcional)">
-                    
-                    <textarea id="depoimentoTexto" 
-                              rows="4"
-                              placeholder="Escreva seu depoimento aqui..."
-                              required></textarea>
-                    
-                    <button type="submit">
-                        <i class="fas fa-paper-plane"></i> Enviar
-                    </button>
-                </div>
-            </form>
-    
-            <!-- Lista de Depoimentos -->
-            <div class="depoimento-lista" id="listaDepoimentos"></div>
+          <div class="powr-comments" id="a03be988_1745512377"></div>
         </div>
-
-    </section>    
-
-
-    <div class="admin-panel">
-        <button onclick="toggleAdminModal()" class="rede-social-item" type="button">
-            <i class="fas fa-lock"></i>
-        </button>
-    </div>
-    
-    <div class="modal-admin" id="adminModal">
-        <h3>Acesso Administrativo</h3>
-        <input type="password" id="adminSenha" placeholder="Senha de administrador">
-        <button onclick="fazerLoginAdmin()">Acessar</button>
-        <button onclick="toggleAdminModal()">Cancelar</button>
-    </div>
-
-    <form onsubmit="return fazerLoginAdmin()">
-    </form>
+      </section>  
 
     <footer>
         <div class="info-legal">
@@ -664,10 +559,9 @@
         </div>
     </footer>
 
+<script src="https://www.powr.io/powr.js?platform=google"></script>
 <script>
-
-    const API_BASE_URL = 'https://dbmq3kiqplins.cloudfront.net';
-
+    
     // ========== FUNCIONALIDADES GERAIS ========== //
     
     // Máscara de telefone
@@ -762,147 +656,32 @@
         });
     });
 
-    // ========== SISTEMA DE DEPOIMENTOS ========== //
+    let powrLoaded = false;
+    document.getElementById('btnToggleDepoimentos')
+      .addEventListener('click', toggleDepoimentos);
     
-    document.addEventListener('DOMContentLoaded', async () => {
-        await carregarDepoimentos();
-        document.getElementById('depoimentoForm').addEventListener('submit', enviarDepoimento);
-        document.getElementById('btnToggleDepoimentos').addEventListener('click', toggleDepoimentos);
-    });
-
-    async function carregarDepoimentos() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/depoimentos`);
-            if (!response.ok) throw new Error('Erro na resposta da API');
-            
-            const data = await response.json();
-            renderizarDepoimentos(data);
-        } catch (error) {
-            console.error('Erro ao carregar depoimentos:', error);
-            alert('Erro ao carregar. Tente recarregar a página.');
-        }
-    }
-
-    function renderizarDepoimentos(depoimentos) {
-        const lista = document.getElementById('listaDepoimentos');
-        lista.innerHTML = '';
-
-        depoimentos.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(depoimento => {
-            const card = document.createElement('div');
-            card.className = 'depoimento-card';
-            card.innerHTML = `
-                ${isAdminAuthenticated() ? `
-                    <button class="btn-excluir" onclick="excluirDepoimento('${depoimento.commentId}')">
-                        <i class="fas fa-times"></i>
-                    </button>` : ''}
-                <p>${depoimento.texto}</p>
-                ${depoimento.nome ? `<small>- ${depoimento.nome}</small>` : ''}
-                <div class="depoimento-data">
-                    ${new Date(depoimento.timestamp).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric'
-                    })}
-                </div>
-            `;
-            lista.appendChild(card);
-        });
-    }
-
-    async function enviarDepoimento(e) {
-        e.preventDefault();
-    
-        const nome = document.getElementById('depoimentoNome').value.trim();
-        const texto = document.getElementById('depoimentoTexto').value.trim();
-    
-        if (!texto) {
-            alert('Por favor, escreva seu depoimento antes de enviar.');
-            return;
-        }
-    
-        try {
-            const response = await fetch(`${API_BASE_URL}/depoimentos`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ texto, nome: nome || 'Anônimo' })
-            });
-    
-            if (!response.ok) throw new Error('Falha no envio');
-    
-            document.getElementById('depoimentoForm').reset();
-            await carregarDepoimentos();
-            alert('Depoimento enviado com sucesso!');
-        } catch (error) {
-            console.error('Erro:', error);
-            alert('Erro ao enviar. Tente novamente.');
-        }
-    }
-
     function toggleDepoimentos() {
-        const container = document.getElementById('depoimentoContainer');
-        container.classList.toggle('active');
-        document.getElementById('depoimentoTexto').focus();
-    }
-
-    // ========== SISTEMA ADMINISTRATIVO ========== //
+      const container = document.getElementById('depoimentoContainer');
+      // Alterna a visibilidade do container via classe CSS  
+      container.classList.toggle('active');                                    // :contentReference[oaicite:0]{index=0}
     
-    const ADMIN_PASSWORD = 'supletivojp2025';
-    let adminTimeout;
+      if (!powrLoaded) {
+        // Cria dinamicamente a tag <script>  
+        const s = document.createElement('script');                            // :contentReference[oaicite:1]{index=1}  
+        // Usa platform=html para sites estáticos (fora do Google Sites)  
+        s.src = 'https://www.powr.io/powr.js?platform=html';                   // :contentReference[oaicite:2]{index=2}  
+        s.async = true;
+        // Quando o script terminar de carregar, inicializa o POWR  
+        s.onload = () => {
+          if (window.POWR && typeof window.POWR.init === 'function') {
+            window.POWR.init();                                                // :contentReference[oaicite:3]{index=3}
+          }
+        };
+        document.body.appendChild(s);                                          // :contentReference[oaicite:4]{index=4}
+        powrLoaded = true;
+      }
+    }    
 
-    function isAdminAuthenticated() {
-        return sessionStorage.getItem('adminAuth') === 'true';
-    }
-
-    function toggleAdminModal() {
-        const modal = document.getElementById('adminModal');
-        modal.classList.toggle('active');
-    }
-
-    function fazerLoginAdmin() {
-        const senha = document.getElementById('adminSenha').value;
-        
-        if (senha === ADMIN_PASSWORD) {
-            sessionStorage.setItem('adminAuth', 'true');
-            document.body.classList.add('admin-authenticated');
-            adminTimeout = setTimeout(() => {
-                sessionStorage.removeItem('adminAuth');
-                document.body.classList.remove('admin-authenticated');
-            }, 3600000);
-            toggleAdminModal();
-            carregarDepoimentos();
-            alert('Modo admin ativado!');
-        } else {
-            alert('Senha incorreta!');
-        }
-    }
-
-    async function excluirDepoimento(id) {
-        if (!confirm('Tem certeza que deseja excluir este depoimento?')) return;
-    
-        try {
-            await fetch(`${API_BASE_URL}/depoimentos/${id}`, {
-                method: 'DELETE'
-            });
-            await carregarDepoimentos();
-        } catch (error) {
-            console.error('Erro ao excluir:', error);
-            alert('Erro na exclusão');
-        }
-    }
-
-    // Inicialização Final
-    document.addEventListener('DOMContentLoaded', () => {
-        if (isAdminAuthenticated()) {
-            document.body.classList.add('admin-authenticated');
-            adminTimeout = setTimeout(() => {
-                sessionStorage.removeItem('adminAuth');
-                document.body.classList.remove('admin-authenticated');
-            }, 3600000);
-        }
-        
-        // Garantir estado inicial dos depoimentos
-        document.getElementById('depoimentoContainer').classList.remove('active');
-    });
 </script>
                 
 </body>

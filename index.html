@@ -268,14 +268,21 @@
         }
         
         .depoimento-container {
-            max-height: 0;
-            overflow: hidden;
+            max-height: none;
+            overflow: visible;
             transition: max-height 0.3s ease;
+            padding: 2rem 0;
           }
 
         .depoimento-container.active {
             max-height: 800px;
         }
+
+        #a03be988_1745512377 {
+            width: 100% !important;
+            min-height: 50px;
+            height: auto !important;
+          }
         
         @keyframes aparecer {
             from { opacity: 0; transform: translateY(-20px); }
@@ -339,7 +346,7 @@
         }
         
         .botao-depoimento-imagem {
-            width: 750px; /* Ajuste conforme necessário */
+            width: 700px;
             height: auto;
             border-radius: 10px;
             display: block;
@@ -367,7 +374,17 @@
             color: var(--branco);
             padding: 3rem 1rem;
             text-align: center;
+            position: relative;
+            z-index: 999;
+            margin-top: auto;
+            width: 100%;
+            box-shadow: 0 -5px 15px rgba(1, 18, 10, 0.1);
         }
+
+        section:last-of-type {
+            margin-bottom: 0;
+            padding-bottom: 2rem;
+          }
 
         .info-legal {
             max-width: 800px;
@@ -664,22 +681,26 @@
     
     function toggleDepoimentos() {
       const container = document.getElementById('depoimentoContainer');
-      // Alterna a visibilidade do container via classe CSS  
-      container.classList.toggle('active');                                    // :contentReference[oaicite:0]{index=0}
+      container.classList.toggle('active');
+
+      setTimeout(() => {
+        if(container.classList.contains('active')) {
+          container.style.height = container.scrollHeight + 'px';
+        } else {
+          container.style.height = '0';
+        }
+      }, 500);
     
-      if (!powrLoaded) {
-        // Cria dinamicamente a tag <script>  
-        const s = document.createElement('script');                            // :contentReference[oaicite:1]{index=1}  
-        // Usa platform=html para sites estáticos (fora do Google Sites)  
-        s.src = 'https://www.powr.io/powr.js?platform=html';                   // :contentReference[oaicite:2]{index=2}  
-        s.async = true;
-        // Quando o script terminar de carregar, inicializa o POWR  
+      if (!powrLoaded) { 
+        const s = document.createElement('script');   
+        s.src = 'https://www.powr.io/powr.js?platform=html';  
+        s.async = true; 
         s.onload = () => {
           if (window.POWR && typeof window.POWR.init === 'function') {
-            window.POWR.init();                                                // :contentReference[oaicite:3]{index=3}
+            window.POWR.init();
           }
         };
-        document.body.appendChild(s);                                          // :contentReference[oaicite:4]{index=4}
+        document.body.appendChild(s);
         powrLoaded = true;
       }
     }    

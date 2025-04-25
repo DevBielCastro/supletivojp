@@ -294,15 +294,20 @@
         
         .depoimento-container {
             max-height: 0;
-            overflow: hidden;
+            overflow: auto;
             transition: max-height 0.3s ease;
           }
 
         .depoimento-container.active {
-            max-height: 800px;
+            max-height: 80vh;
             max-height: none;
             overflow: visible;
         }
+
+        #appView {
+            height: 500px;
+            overflow-y: scroll;
+          }          
         
         @keyframes aparecer {
             from { opacity: 0; transform: translateY(-20px); }

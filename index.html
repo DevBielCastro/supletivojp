@@ -9,6 +9,8 @@
     <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <meta name="google-site-verification" content="dFAwGABM6s5Lhunhi8IBWQ8D1BFq9Jo_etylFLJ3xb8" />
+    <meta name="description" content="Conclua seu Ensino Fundamental ou Médio em João Pessoa com provas agendadas. 
+    Certificado válido nacionalmente. Matrículas rápidas e preço acessível.">
     <style>
         :root {
             --dourado: #bc994e;
@@ -31,14 +33,16 @@
             flex-direction: column;
         }
 
-        main {
-            flex: 1;
-        }
-
         .container-principal {
             min-height: 100vh;
             overflow-x: hidden;
-        }          
+        }
+        
+        img {
+            width: 100%;
+            height: auto;
+            aspect-ratio: attr(width) / attr(height);
+        }
 
         /* Header */
         .header {
@@ -183,8 +187,8 @@
         }
 
         button {
-            background: var(--dourado);
-            color: var(--verde-escuro);
+            background: #a88332;
+            color: #ffffff;
             padding: 15px 40px;
             border: none;
             border-radius: 5px;
@@ -499,6 +503,7 @@
 </head>
 <body>
     <header class="header">
+        <source srcset="images/logo-supletivo.webp" type="image/webp">
         <img src="images/logo-supletivo.png" alt="Supletivo JP" class="logo">
     </header>
 
@@ -588,6 +593,7 @@
 
     <section class="depoimentos-section">
         <div class="botao-depoimento-container" id="btnToggleDepoimentos">
+            <source srcset="images/botao-logo-supletivo.webp" type="image/webp">
           <img src="images/botao-depoimentos.png" alt="Depoimentos" class="botao-depoimento-imagem">
         </div>
         <div class="depoimento-container" id="depoimentoContainer">

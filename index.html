@@ -729,10 +729,23 @@
     let powrLoaded = false;
     document.getElementById('btnToggleDepoimentos')
       .addEventListener('click', toggleDepoimentos);
+      
     
     function toggleDepoimentos() {
-      const container = document.getElementById('depoimentoContainer');
-      container.classList.toggle('active');
+      const container = document.getElementById('btnToggleDepoimentos').addEventListener('click', function() {
+        const container = document.getElementById('depoimentoContainer');
+        container.classList.toggle('active');
+        
+        if (container.classList.contains('active')) {
+            if (!window.POWR) {
+                const script = document.createElement('script');
+                script.src = 'https://www.powr.io/powr.js?platform=html';
+                document.body.appendChild(script);
+            } else {
+                window.POWR.init();
+            }
+        }
+    });
     
       if (!powrLoaded) {
         const s = document.createElement('script'); 
